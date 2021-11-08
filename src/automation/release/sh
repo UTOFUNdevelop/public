@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -o errexit -o nounset -o xtrace
+
+increase_patch="$(
+  cat <<'JAVASCRIPT'
+fs.readFileSync(process.stdin.fd, "utf-8")
+  .trim()
+  .replace(/(?<=(?:\d+\.){2})\d+/, patch => Number(patch) + 1);
+JAVASCRIPT
+)"
+tag="$(git describe --tags --abbrev=0 | node -p "$increase_patch")"
+git fetch origin
+git push origin origin/develop:master
+git tag --annotate --message "$tag" "$tag" origin/master
+git push origin "$tag"
